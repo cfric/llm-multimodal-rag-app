@@ -1,0 +1,44 @@
+{
+  "title": "Multimodal RAG Dashboard",
+  "uid": "rag-dashboard",
+  "panels": [
+    {
+      "title": "Queries per Minute",
+      "type": "stat",
+      "gridPos": {"h": 4, "w": 6, "x": 0, "y": 0},
+      "targets": [{"expr": "rate(rag_query_total[1m])", "legendFormat": "{{model}} - {{status}}"}]
+    },
+    {
+      "title": "Query Latency (p95)",
+      "type": "gauge",
+      "gridPos": {"h": 4, "w": 6, "x": 6, "y": 0},
+      "targets": [{"expr": "histogram_quantile(0.95, rate(rag_query_latency_seconds_bucket[5m]))", "legendFormat": "p95"}]
+    },
+    {
+      "title": "Error Rate",
+      "type": "stat",
+      "gridPos": {"h": 4, "w": 6, "x": 12, "y": 0},
+      "targets": [{"expr": "rate(rag_errors_total[5m])", "legendFormat": "{{component}}"}]
+    },
+    {
+      "title": "Documents Ingested",
+      "type": "stat",
+      "gridPos": {"h": 4, "w": 6, "x": 18, "y": 0},
+      "targets": [{"expr": "rag_ingestion_total", "legendFormat": "{{status}}"}]
+    },
+    {
+      "title": "Query Latency Distribution",
+      "type": "histogram",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 4},
+      "targets": [{"expr": "rate(rag_query_latency_seconds_bucket[5m])", "legendFormat": "{{le}}s"}]
+    },
+    {
+      "title": "Retrieved Docs per Query",
+      "type": "graph",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 4},
+      "targets": [{"expr": "histogram_quantile(0.5, rate(rag_retrieved_docs_count_bucket[5m]))", "legendFormat": "median"}]
+    }
+  ],
+  "time": {"from": "now-1h", "to": "now"},
+  "refresh": "10s"
+}
