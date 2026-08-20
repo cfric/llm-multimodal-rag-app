@@ -15,19 +15,15 @@ class VectorStoreFactory:
 
         if provider == "chroma":
             from src.vectorstore.chroma_store import ChromaVectorStore
+
             return ChromaVectorStore(
                 embedder=embedder,
                 persist_directory=settings.vectorstore.persist_directory,
                 collection_name=settings.vectorstore.collection_name,
-            )
-
-        if provider == "qdrant":
-            from src.vectorstore.qdrant_store import QdrantVectorStore
-            return QdrantVectorStore(
-                embedder=embedder,
-                url=settings.vectorstore.qdrant_url,
-                collection_name=settings.vectorstore.collection_name,
-                api_key=settings.vectorstore.qdrant_api_key,
+                min_relevance_score=settings.vectorstore.min_relevance_score,
+                image_min_relevance_score=settings.vectorstore.image_min_relevance_score,
+                chroma_host=settings.vectorstore.chroma_host,
+                chroma_port=settings.vectorstore.chroma_port,
             )
 
         raise ConfigurationError(f"Unknown VectorStore provider: {provider}")

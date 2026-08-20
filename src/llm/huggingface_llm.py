@@ -28,7 +28,7 @@ class HuggingFaceLLM(LLMBase):
     def _build_model(self) -> BaseChatModel:
         if self._mode == "api":
             endpoint = HuggingFaceEndpoint(
-                repo_id=self._model_name,
+                model=self._model_name,
                 huggingfacehub_api_token=self._api_key,
                 temperature=self._temperature,
                 max_new_tokens=self._max_tokens,

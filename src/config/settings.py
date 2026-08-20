@@ -1,9 +1,25 @@
+import os
 from pathlib import Path
-from typing import Literal
+from typing import Any, Literal
 
 import yaml
+from dotenv import dotenv_values
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+def _merge_environment_overrides[SettingsType: BaseSettings](
+    settings_type: type[SettingsType], yaml_values: dict[str, Any]
+) -> dict[str, Any]:
+    """Apply .env and process values over the YAML defaults for one settings section."""
+    env_prefix = str(settings_type.model_config.get("env_prefix", ""))
+    environment = {**dotenv_values(".env"), **os.environ}
+    values = dict(yaml_values)
+    for field_name in settings_type.model_fields:
+        env_value = environment.get(f"{env_prefix}{field_name.upper()}")
+        if env_value is not None:
+            values[field_name] = env_value
+    return values
 
 
 class LLMSettings(BaseSettings):
@@ -28,12 +44,13 @@ class EmbeddingSettings(BaseSettings):
 
 
 class VectorStoreSettings(BaseSettings):
-    provider: Literal["chroma", "qdrant"] = "chroma"
+    provider: Literal["chroma"] = "chroma"
     persist_directory: str = "./data/vectorstore"
     collection_name: str = "multimodal_rag"
-    qdrant_url: str = "http://localhost:6333"
-    qdrant_api_key: str = ""
-
+    min_relevance_score: float = 0.35
+    image_min_relevance_score: float = 0.55
+    chroma_host: str = ""
+    chroma_port: int = 8000
     model_config = SettingsConfigDict(env_prefix="VECTORSTORE_", env_file=".env", extra="allow")
 
 
@@ -69,8 +86,10 @@ class LangSmithSettings(BaseSettings):
 
 
 class APISettings(BaseSettings):
-    host: str = "0.0.0.0"
+    host: str = "127.0.0.1"
     port: int = 8000
+    cors_origins: str = "http://localhost:8501,http://127.0.0.1:8501"
+    max_upload_size_mb: int = 25
 
     model_config = SettingsConfigDict(env_prefix="API_", env_file=".env", extra="allow")
 
@@ -113,15 +132,27 @@ class Settings(BaseSettings):
         langsmith_data = data.pop("langsmith", {})
         api_data = data.pop("api", {})
         return cls(
-            **data,
-            llm=LLMSettings(**llm_data),
-            embedding=EmbeddingSettings(**embedding_data),
-            vectorstore=VectorStoreSettings(**vectorstore_data),
-            reranker=RerankerSettings(**reranker_data),
-            retrieval=RetrievalSettings(**retrieval_data),
-            monitoring=MonitoringSettings(**monitoring_data),
-            langsmith=LangSmithSettings(**langsmith_data),
-            api=APISettings(**api_data),
+            **_merge_environment_overrides(cls, data),
+            llm=LLMSettings(**_merge_environment_overrides(LLMSettings, llm_data)),
+            embedding=EmbeddingSettings(
+                **_merge_environment_overrides(EmbeddingSettings, embedding_data)
+            ),
+            vectorstore=VectorStoreSettings(
+                **_merge_environment_overrides(VectorStoreSettings, vectorstore_data)
+            ),
+            reranker=RerankerSettings(
+                **_merge_environment_overrides(RerankerSettings, reranker_data)
+            ),
+            retrieval=RetrievalSettings(
+                **_merge_environment_overrides(RetrievalSettings, retrieval_data)
+            ),
+            monitoring=MonitoringSettings(
+                **_merge_environment_overrides(MonitoringSettings, monitoring_data)
+            ),
+            langsmith=LangSmithSettings(
+                **_merge_environment_overrides(LangSmithSettings, langsmith_data)
+            ),
+            api=APISettings(**_merge_environment_overrides(APISettings, api_data)),
         )
 
 

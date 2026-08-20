@@ -1,5 +1,4 @@
 import logging
-from pathlib import Path
 
 from langchain_core.documents import Document
 from langchain_text_splitters import RecursiveCharacterTextSplitter

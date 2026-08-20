@@ -1,4 +1,5 @@
 import logging
+from collections.abc import AsyncIterator
 
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
@@ -8,7 +9,6 @@ from src.api.schemas import QueryRequest, QueryResponse, SourceResponse
 from src.core.exceptions import LLMError, RetrievalError
 from src.monitoring import metrics
 from src.rag.chain import MultimodalRAGChain
-from src.rag.memory import ConversationMemory
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/rag", tags=["RAG"])
@@ -18,9 +18,9 @@ router = APIRouter(prefix="/rag", tags=["RAG"])
 async def query(
     request: QueryRequest,
     chain: MultimodalRAGChain = Depends(get_rag_chain),
-    memory: ConversationMemory = Depends(get_session_memory),
 ) -> QueryResponse:
     try:
+        memory = get_session_memory(request.session_id)
         memory.add_user_message(request.question)
         response = chain.invoke(request.question, memory.get_history())
         memory.add_assistant_message(response.answer)
@@ -48,6 +48,7 @@ async def query(
             query=response.query,
             model=response.model,
             latency_ms=response.latency_ms,
+            session_id=request.session_id,
         )
     except (LLMError, RetrievalError) as e:
         metrics.record_error("rag", type(e).__name__)
@@ -59,11 +60,11 @@ async def query(
 async def stream_query(
     request: QueryRequest,
     chain: MultimodalRAGChain = Depends(get_rag_chain),
-    memory: ConversationMemory = Depends(get_session_memory),
 ) -> StreamingResponse:
+    memory = get_session_memory(request.session_id)
     memory.add_user_message(request.question)
 
-    async def generate():
+    async def generate() -> AsyncIterator[str]:
         full_response = []
         async for chunk in chain.astream(request.question, memory.get_history()):
             full_response.append(chunk)
@@ -74,9 +75,7 @@ async def stream_query(
 
 
 @router.delete("/session/{session_id}")
-async def clear_session(
-    session_id: str,
-    memory: ConversationMemory = Depends(get_session_memory),
-) -> dict:
+async def clear_session(session_id: str) -> dict[str, str]:
+    memory = get_session_memory(session_id)
     memory.clear()
     return {"session_id": session_id, "status": "cleared"}

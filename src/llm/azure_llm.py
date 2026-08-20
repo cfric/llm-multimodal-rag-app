@@ -2,6 +2,7 @@ import logging
 
 from langchain_core.language_models import BaseChatModel
 from langchain_openai import AzureChatOpenAI
+from pydantic import SecretStr
 
 from src.core.exceptions import ConfigurationError
 from src.llm.base import LLMBase
@@ -33,10 +34,10 @@ class AzureLLM(LLMBase):
 
     def _build_model(self) -> BaseChatModel:
         return AzureChatOpenAI(
-            api_key=self._api_key,
+            api_key=SecretStr(self._api_key),
             azure_endpoint=self._endpoint,
             azure_deployment=self._deployment,
             api_version=self._api_version,
             temperature=self._temperature,
-            max_tokens=self._max_tokens,
+            max_completion_tokens=self._max_tokens,
         )

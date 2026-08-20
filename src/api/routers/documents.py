@@ -1,12 +1,12 @@
 import logging
-import shutil
 import tempfile
 from pathlib import Path
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, UploadFile, status
 
 from src.api.dependencies import get_ingestion_pipeline, get_vector_store
-from src.api.schemas import DeleteResponse, DocumentListResponse, IngestionResponse
+from src.api.schemas import DeleteResponse, DocumentInfo, DocumentListResponse, IngestionResponse
+from src.config.settings import get_settings
 from src.core.exceptions import IngestionError, UnsupportedFileTypeError
 from src.core.interfaces import BaseVectorStore
 from src.ingestion.pipeline import IngestionPipeline
@@ -34,8 +34,19 @@ async def upload_document(
             detail=f"Unsupported file type: {ext}. Allowed: {ALLOWED_EXTENSIONS}",
         )
 
+    max_upload_size_mb = get_settings().api.max_upload_size_mb
+    max_upload_bytes = max_upload_size_mb * 1024 * 1024
+    uploaded_bytes = 0
     with tempfile.NamedTemporaryFile(suffix=ext, delete=False) as tmp:
-        shutil.copyfileobj(file.file, tmp)
+        while chunk := await file.read(1024 * 1024):
+            uploaded_bytes += len(chunk)
+            if uploaded_bytes > max_upload_bytes:
+                Path(tmp.name).unlink(missing_ok=True)
+                raise HTTPException(
+                    status_code=413,
+                    detail=f"Upload exceeds the {max_upload_size_mb} MB limit",
+                )
+            tmp.write(chunk)
         tmp_path = tmp.name
 
     background_tasks.add_task(_run_ingestion, tmp_path, file.filename, pipeline)
@@ -50,7 +61,7 @@ async def upload_document(
 
 async def _run_ingestion(tmp_path: str, filename: str, pipeline: IngestionPipeline) -> None:
     try:
-        ids = await pipeline.ingest(tmp_path)
+        ids = await pipeline.ingest(tmp_path, source_name=filename)
         metrics.record_ingestion(success=True)
         logger.info("Ingestion complete: %s — %d chunks", filename, len(ids))
     except (IngestionError, UnsupportedFileTypeError) as e:
@@ -63,11 +74,11 @@ async def _run_ingestion(tmp_path: str, filename: str, pipeline: IngestionPipeli
 
 @router.get("", response_model=DocumentListResponse)
 async def list_documents(
-    vector_store=Depends(get_vector_store),
+    vector_store: BaseVectorStore = Depends(get_vector_store),
 ) -> DocumentListResponse:
     sources = vector_store.list_sources()
     return DocumentListResponse(
-        documents=sources,
+        documents=[DocumentInfo(**source) for source in sources],
         total=len(sources),
     )
 
@@ -75,11 +86,11 @@ async def list_documents(
 @router.delete("/{source_file}", response_model=DeleteResponse)
 async def delete_document(
     source_file: str,
-    vector_store=Depends(get_vector_store),
+    vector_store: BaseVectorStore = Depends(get_vector_store),
 ) -> DeleteResponse:
     try:
         vector_store.delete_by_source(source_file)
         return DeleteResponse(source_file=source_file, status="deleted")
     except Exception as e:
         logger.error("Delete failed for %s: %s", source_file, e)
-        raise HTTPException(status_code=500, detail=str(e)) from e
+        raise HTTPException(status_code=500, detail="Document deletion failed") from e

@@ -2,6 +2,7 @@ import logging
 
 from langchain_core.embeddings import Embeddings
 from langchain_openai import OpenAIEmbeddings
+from pydantic import SecretStr
 
 from src.core.exceptions import ConfigurationError
 from src.core.interfaces import BaseEmbedder
@@ -20,7 +21,7 @@ class OpenAIEmbedder(BaseEmbedder):
     def get_embeddings(self) -> Embeddings:
         if self._embeddings is None:
             self._embeddings = OpenAIEmbeddings(
-                api_key=self._api_key,
+                api_key=SecretStr(self._api_key),
                 model=self._model,
             )
             logger.info("OpenAI embeddings initialized: %s", self._model)

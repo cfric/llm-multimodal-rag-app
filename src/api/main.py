@@ -23,13 +23,13 @@ def create_app() -> FastAPI:
 
     app = FastAPI(
         title="Multimodal RAG API",
-        description="Production-ready multimodal RAG system",
+        description="Local single-user multimodal RAG demo",
         version="0.1.0",
     )
 
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],
+        allow_origins=[origin.strip() for origin in settings.api.cors_origins.split(",")],
         allow_methods=["*"],
         allow_headers=["*"],
     )
@@ -51,5 +51,6 @@ app = create_app()
 
 if __name__ == "__main__":
     import uvicorn
+
     settings = get_settings()
     uvicorn.run("src.api.main:app", host=settings.api.host, port=settings.api.port, reload=True)

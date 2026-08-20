@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
-from dataclasses import dataclass, field
-from typing import AsyncIterator, Literal
+from collections.abc import AsyncIterator
+from dataclasses import dataclass
+from typing import Literal
 
 from langchain_core.documents import Document
 from langchain_core.embeddings import Embeddings
@@ -70,7 +71,7 @@ class BaseVectorStore(ABC):
         pass
 
     @abstractmethod
-    def list_sources(self) -> list[dict]:
+    def list_sources(self) -> list[dict[str, str]]:
         pass
 
     @abstractmethod
@@ -107,7 +108,7 @@ class BaseRAGChain(ABC):
         pass
 
     @abstractmethod
-    async def astream(self, query: str, chat_history: list[ChatMessage]) -> AsyncIterator[str]:
+    def astream(self, query: str, chat_history: list[ChatMessage]) -> AsyncIterator[str]:
         pass
 
 

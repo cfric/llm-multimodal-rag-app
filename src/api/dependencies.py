@@ -81,7 +81,7 @@ def get_ingestion_pipeline() -> IngestionPipeline:
     return _get_ingestion_pipeline()
 
 
-def get_session_memory(session_id: str = "default") -> ConversationMemory:
+def get_session_memory(session_id: str) -> ConversationMemory:
     if session_id not in _sessions:
         _sessions[session_id] = ConversationMemory()
     return _sessions[session_id]

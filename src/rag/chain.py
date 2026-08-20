@@ -1,8 +1,9 @@
 import base64
 import logging
 import time
+from collections.abc import AsyncIterator
 from pathlib import Path
-from typing import AsyncIterator
+from typing import Any
 
 from langchain_core.documents import Document
 from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, SystemMessage
@@ -78,18 +79,26 @@ class MultimodalRAGChain(BaseRAGChain):
 
     def _build_sources(self, docs: list[Document]) -> list[Source]:
         sources = []
+        seen_sources: set[tuple[str, str, int | None, str | None]] = set()
         for doc in docs:
             meta = doc.metadata
             doc_type = meta.get("type", "text")
+            source_file = meta.get("source_file", "unknown")
+            page = meta.get("page")
+            image_path = meta.get("image_path") if doc_type == "image" else None
+            source_key = (doc_type, source_file, page, image_path)
+            if source_key in seen_sources:
+                continue
+            seen_sources.add(source_key)
             sources.append(
                 Source(
                     type=doc_type,
                     content=meta.get("table_content", doc.page_content)
                     if doc_type == "table"
                     else doc.page_content,
-                    source_file=meta.get("source_file", "unknown"),
-                    page=meta.get("page"),
-                    image_path=meta.get("image_path") if doc_type == "image" else None,
+                    source_file=source_file,
+                    page=page,
+                    image_path=image_path,
                     caption=meta.get("caption") if doc_type == "table" else None,
                     summary=doc.page_content if doc_type == "table" else None,
                     score=meta.get("rerank_score"),
@@ -111,7 +120,7 @@ class MultimodalRAGChain(BaseRAGChain):
             else:
                 messages.append(AIMessage(content=msg.content))
 
-        content_parts: list[dict] = []
+        content_parts: list[str | dict[Any, Any]] = []
 
         text_docs = [d for d in docs if d.metadata.get("type") == "text"]
         image_docs = [d for d in docs if d.metadata.get("type") == "image"]
@@ -163,8 +172,13 @@ class MultimodalRAGChain(BaseRAGChain):
 
     def _encode_image(self, image_path: str) -> tuple[str, str]:
         ext = Path(image_path).suffix.lstrip(".").lower()
-        mime_map = {"jpg": "image/jpeg", "jpeg": "image/jpeg", "png": "image/png",
-                    "gif": "image/gif", "webp": "image/webp"}
+        mime_map = {
+            "jpg": "image/jpeg",
+            "jpeg": "image/jpeg",
+            "png": "image/png",
+            "gif": "image/gif",
+            "webp": "image/webp",
+        }
         mime = mime_map.get(ext, "image/png")
         with open(image_path, "rb") as f:
             return base64.b64encode(f.read()).decode(), mime

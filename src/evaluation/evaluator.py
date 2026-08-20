@@ -1,10 +1,11 @@
 import logging
 from dataclasses import dataclass
+from typing import Any, cast
 
 from datasets import Dataset
 
 from src.core.exceptions import EvaluationError
-from src.core.interfaces import BaseRAGChain, ChatMessage
+from src.core.interfaces import BaseRAGChain
 
 logger = logging.getLogger(__name__)
 
@@ -50,19 +51,21 @@ class RAGEvaluator:
             contexts.append([s.content for s in response.sources])
             ground_truths.append(sample.ground_truth)
 
-        dataset = Dataset.from_dict({
-            "question": questions,
-            "answer": answers,
-            "contexts": contexts,
-            "ground_truth": ground_truths,
-        })
+        dataset = Dataset.from_dict(
+            {
+                "question": questions,
+                "answer": answers,
+                "contexts": contexts,
+                "ground_truth": ground_truths,
+            }
+        )
 
         try:
             result = ragas_evaluate(
                 dataset=dataset,
                 metrics=[faithfulness, answer_relevancy, context_recall, context_precision],
             )
-            scores = result.to_pandas().mean()
+            scores = cast(Any, result).to_pandas().mean()
             logger.info("Evaluation complete: %s", dict(scores))
             return EvaluationResult(
                 faithfulness=float(scores.get("faithfulness", 0.0)),

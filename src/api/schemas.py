@@ -3,7 +3,7 @@ from pydantic import BaseModel, Field
 
 class QueryRequest(BaseModel):
     question: str = Field(..., min_length=1, max_length=2000)
-    session_id: str = Field(default="default")
+    session_id: str = Field(default="default", min_length=1, max_length=64)
 
 
 class SourceResponse(BaseModel):
@@ -22,6 +22,7 @@ class QueryResponse(BaseModel):
     query: str
     model: str
     latency_ms: float
+    session_id: str
 
 
 class IngestionResponse(BaseModel):

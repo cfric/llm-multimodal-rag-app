@@ -2,10 +2,8 @@ import asyncio
 import logging
 from pathlib import Path
 
-from langchain_core.documents import Document
-
 from src.core.exceptions import IngestionError, UnsupportedFileTypeError
-from src.core.interfaces import BaseLoader, BaseProcessor, BaseVectorStore
+from src.core.interfaces import BaseLoader, BaseVectorStore
 from src.ingestion.processors.image_processor import ImageProcessor
 from src.ingestion.processors.table_processor import TableProcessor
 from src.ingestion.processors.text_processor import TextProcessor
@@ -34,18 +32,23 @@ class IngestionPipeline:
                 return loader
         raise UnsupportedFileTypeError(f"No loader found for: {file_path}")
 
-    async def ingest(self, file_path: str) -> list[str]:
+    async def ingest(self, file_path: str, source_name: str | None = None) -> list[str]:
         path = Path(file_path)
         if not path.exists():
             raise IngestionError(f"File not found: {file_path}")
 
-        logger.info("Starting ingestion: %s", path.name)
+        display_name = source_name or path.name
+        logger.info("Starting ingestion: %s", display_name)
 
         try:
             loader = self._get_loader(file_path)
             raw_documents = loader.load(file_path)
         except Exception as e:
             raise IngestionError(f"Loading failed for {file_path}: {e}") from e
+
+        if source_name:
+            for doc in raw_documents:
+                doc.metadata["source_file"] = source_name
 
         text_chunks, image_chunks, table_chunks = await asyncio.gather(
             self._text_processor.process(raw_documents),
@@ -65,7 +68,7 @@ class IngestionPipeline:
 
         logger.info(
             "Ingestion complete: %s — %d text, %d image, %d table chunks",
-            path.name,
+            display_name,
             len(text_chunks),
             len(image_chunks),
             len(table_chunks),

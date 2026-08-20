@@ -15,6 +15,7 @@ class LLMFactory:
 
         if provider == "openai":
             from src.llm.openai_llm import OpenAILLM
+
             return OpenAILLM(
                 api_key=settings.openai_api_key,
                 model=settings.llm.model,
@@ -24,6 +25,7 @@ class LLMFactory:
 
         if provider == "azure":
             from src.llm.azure_llm import AzureLLM
+
             return AzureLLM(
                 api_key=settings.azure_openai_api_key,
                 endpoint=settings.llm.azure_endpoint,
@@ -35,6 +37,7 @@ class LLMFactory:
 
         if provider == "ollama":
             from src.llm.local_llm import LocalLLM
+
             return LocalLLM(
                 base_url=settings.llm.ollama_base_url,
                 model=settings.llm.model,
@@ -44,6 +47,7 @@ class LLMFactory:
 
         if provider == "huggingface":
             from src.llm.huggingface_llm import HuggingFaceLLM
+
             return HuggingFaceLLM(
                 model=settings.llm.model,
                 mode=settings.llm.hf_mode,

@@ -1,7 +1,5 @@
 import logging
 import threading
-from functools import wraps
-from typing import Callable
 
 from prometheus_client import Counter, Histogram, start_http_server
 

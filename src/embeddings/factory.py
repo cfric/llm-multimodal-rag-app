@@ -15,6 +15,7 @@ class EmbedderFactory:
 
         if provider == "openai":
             from src.embeddings.openai_embeddings import OpenAIEmbedder
+
             return OpenAIEmbedder(
                 api_key=settings.openai_api_key,
                 model=settings.embedding.model,
@@ -22,6 +23,7 @@ class EmbedderFactory:
 
         if provider == "huggingface":
             from src.embeddings.local_embeddings import LocalEmbedder
+
             return LocalEmbedder(model=settings.embedding.model)
 
         raise ConfigurationError(f"Unknown embedding provider: {provider}")

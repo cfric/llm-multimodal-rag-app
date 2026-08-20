@@ -1,50 +1,50 @@
-class RAGException(Exception):
+class RAGError(Exception):
     pass
 
 
-class ConfigurationError(RAGException):
+class ConfigurationError(RAGError):
     pass
 
 
-class DocumentLoadError(RAGException):
+class DocumentLoadError(RAGError):
     pass
 
 
-class UnsupportedFileTypeError(RAGException):
+class UnsupportedFileTypeError(RAGError):
     pass
 
 
-class EmbeddingError(RAGException):
+class EmbeddingError(RAGError):
     pass
 
 
-class VectorStoreError(RAGException):
+class VectorStoreError(RAGError):
     pass
 
 
-class LLMError(RAGException):
+class LLMError(RAGError):
     pass
 
 
-class RetrievalError(RAGException):
+class RetrievalError(RAGError):
     pass
 
 
-class RerankerError(RAGException):
+class RerankerError(RAGError):
     pass
 
 
-class IngestionError(RAGException):
+class IngestionError(RAGError):
     pass
 
 
-class ImageProcessingError(RAGException):
+class ImageProcessingError(RAGError):
     pass
 
 
-class TableProcessingError(RAGException):
+class TableProcessingError(RAGError):
     pass
 
 
-class EvaluationError(RAGException):
+class EvaluationError(RAGError):
     pass

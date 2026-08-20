@@ -1,5 +1,5 @@
 import logging
-from typing import Literal
+from typing import Any, Literal
 
 from langchain_core.documents import Document
 
@@ -12,11 +12,12 @@ logger = logging.getLogger(__name__)
 class CrossEncoderReranker(BaseReranker):
     def __init__(self, model: str) -> None:
         self._model_name = model
-        self._model = None
+        self._model: Any | None = None
 
-    def _get_model(self):
+    def _get_model(self) -> Any:
         if self._model is None:
             from sentence_transformers import CrossEncoder
+
             self._model = CrossEncoder(self._model_name)
             logger.info("CrossEncoder reranker initialized: %s", self._model_name)
         return self._model
@@ -43,11 +44,12 @@ class CohereReranker(BaseReranker):
     def __init__(self, api_key: str, model: str = "rerank-multilingual-v3.0") -> None:
         self._api_key = api_key
         self._model = model
-        self._client = None
+        self._client: Any | None = None
 
-    def _get_client(self):
+    def _get_client(self) -> Any:
         if self._client is None:
             import cohere
+
             self._client = cohere.Client(self._api_key)
             logger.info("Cohere reranker initialized: %s", self._model)
         return self._client

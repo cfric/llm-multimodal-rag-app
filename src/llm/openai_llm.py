@@ -2,6 +2,7 @@ import logging
 
 from langchain_core.language_models import BaseChatModel
 from langchain_openai import ChatOpenAI
+from pydantic import SecretStr
 
 from src.core.exceptions import ConfigurationError
 from src.llm.base import LLMBase
@@ -18,8 +19,8 @@ class OpenAILLM(LLMBase):
 
     def _build_model(self) -> BaseChatModel:
         return ChatOpenAI(
-            api_key=self._api_key,
+            api_key=SecretStr(self._api_key),
             model=self._model_name,
             temperature=self._temperature,
-            max_tokens=self._max_tokens,
+            max_completion_tokens=self._max_tokens,
         )

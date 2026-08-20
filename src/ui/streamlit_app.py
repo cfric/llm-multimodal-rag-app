@@ -2,11 +2,12 @@ import asyncio
 import logging
 from pathlib import Path
 
-import httpx
 import streamlit as st
+from streamlit.runtime.uploaded_file_manager import UploadedFile
 
 from src.api.dependencies import get_ingestion_pipeline, get_rag_chain, get_session_memory
 from src.config.settings import get_settings
+from src.core.interfaces import Source
 from src.ui.base_ui import BaseUI
 from src.utils.logging_setup import setup_logging
 
@@ -61,7 +62,7 @@ class StreamlitApp(BaseUI):
                 st.session_state.messages = []
                 st.rerun()
 
-    def _handle_upload(self, uploaded_file) -> None:
+    def _handle_upload(self, uploaded_file: UploadedFile) -> None:
         with st.spinner(f"Indiziere {uploaded_file.name}..."):
             tmp_path = Path(f"/tmp/{uploaded_file.name}")
             tmp_path.write_bytes(uploaded_file.read())
@@ -78,6 +79,7 @@ class StreamlitApp(BaseUI):
     def _render_document_list(self) -> None:
         try:
             from src.api.dependencies import get_vector_store
+
             vs = get_vector_store()
             sources = vs.list_sources()
             if not sources:
@@ -85,7 +87,8 @@ class StreamlitApp(BaseUI):
                 return
             for doc in sources:
                 col1, col2 = st.columns([3, 1])
-                icon = {"text": "📄", "image": "🖼️", "table": "📊"}.get(doc.get("type", "text"), "📄")
+                doc_type = doc.get("type", "text")
+                icon = {"text": "📄", "image": "🖼️", "table": "📊"}.get(doc_type, "📄")
                 col1.caption(f"{icon} {doc['source_file']}")
                 if col2.button("🗑️", key=f"del_{doc['source_file']}"):
                     vs.delete_by_source(doc["source_file"])
@@ -127,32 +130,36 @@ class StreamlitApp(BaseUI):
                             f"Quellen: `{len(response.sources)}`"
                         )
 
-                        st.session_state.messages.append({
-                            "role": "assistant",
-                            "content": response.answer,
-                            "sources": response.sources,
-                        })
+                        st.session_state.messages.append(
+                            {
+                                "role": "assistant",
+                                "content": response.answer,
+                                "sources": response.sources,
+                            }
+                        )
                     except Exception as e:
                         st.error(f"Fehler: {e}")
                         logger.error("Chat query failed: %s", e)
 
-    def _render_sources(self, sources) -> None:
+    def _render_sources(self, sources: list[Source]) -> None:
         if not sources:
             return
 
         with st.expander(f"Quellen ({len(sources)})", expanded=False):
             for i, source in enumerate(sources):
-                st.markdown(f"---")
+                st.markdown("---")
                 page_str = f", Seite {source.page}" if source.page else ""
 
                 if source.type == "text":
                     st.markdown(f"**📄 {source.source_file}{page_str}**")
-                    st.markdown(f"> {source.content[:500]}{'...' if len(source.content) > 500 else ''}")
+                    truncated = source.content[:500]
+                    suffix = "..." if len(source.content) > 500 else ""
+                    st.markdown(f"> {truncated}{suffix}")
 
                 elif source.type == "image":
                     st.markdown(f"**🖼️ {source.source_file}{page_str}**")
                     if source.image_path and Path(source.image_path).exists():
-                        st.image(source.image_path, use_column_width=True)
+                        st.image(source.image_path, width=320)
                     st.caption(f"Bildbeschreibung: {source.content[:300]}")
 
                 elif source.type == "table":

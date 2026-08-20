@@ -58,4 +58,5 @@ class TableProcessor(BaseProcessor):
             raise TableProcessingError(f"LLM summarization failed: {e}") from e
 
     def _extract_caption(self, doc: Document) -> str:
-        return doc.metadata.get("caption") or doc.metadata.get("element_type", "Tabelle")
+        caption = doc.metadata.get("caption") or doc.metadata.get("element_type", "Tabelle")
+        return str(caption)
