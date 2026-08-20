@@ -1,8 +1,9 @@
+from unittest.mock import MagicMock
+
 import pytest
-from unittest.mock import MagicMock, AsyncMock
 from langchain_core.documents import Document
 
-from src.core.interfaces import ChatMessage, Source, RAGResponse
+from src.core.interfaces import ChatMessage
 
 
 @pytest.fixture
@@ -46,7 +47,12 @@ def mock_llm():
     llm.model_name = "gpt-4o-mock"
     model = MagicMock()
     model.invoke.return_value = MagicMock(content="Das ist eine Testantwort.")
-    model.astream = AsyncMock(return_value=iter(["Das ", "ist ", "eine ", "Antwort."]))
+
+    async def _astream(*args, **kwargs):
+        for text in ["Das ", "ist ", "eine ", "Antwort."]:
+            yield MagicMock(content=text)
+
+    model.astream = _astream
     llm.get_model.return_value = model
     return llm
 

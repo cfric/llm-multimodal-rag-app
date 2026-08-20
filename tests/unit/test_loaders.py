@@ -1,10 +1,6 @@
 import pytest
-from unittest.mock import MagicMock, patch
-from pathlib import Path
 
-from langchain_core.documents import Document
-
-from src.core.exceptions import DocumentLoadError, UnsupportedFileTypeError
+from src.core.exceptions import UnsupportedFileTypeError
 from src.ingestion.loaders.image_loader import ImageLoader
 from src.ingestion.loaders.text_loader import TextLoader
 

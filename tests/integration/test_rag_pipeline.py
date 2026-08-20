@@ -1,9 +1,7 @@
-import pytest
 from unittest.mock import MagicMock
 
 from langchain_core.documents import Document
 
-from src.core.interfaces import ChatMessage
 from src.rag.chain import MultimodalRAGChain
 from src.retrieval.semantic_retriever import SemanticRetriever
 
@@ -33,7 +31,10 @@ class TestRAGPipeline:
 
     def test_full_rag_query_with_reranker(self, mock_llm):
         docs = [
-            Document(page_content=f"Dokument {i}", metadata={"type": "text", "source_file": f"doc{i}.pdf", "page": i})
+            Document(
+                page_content=f"Dokument {i}",
+                metadata={"type": "text", "source_file": f"doc{i}.pdf", "page": i},
+            )
             for i in range(10)
         ]
         mock_reranker = MagicMock()

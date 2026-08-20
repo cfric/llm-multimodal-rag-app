@@ -1,16 +1,17 @@
-import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 
-from src.ingestion.pipeline import IngestionPipeline
+import pytest
+
 from src.core.exceptions import IngestionError
+from src.ingestion.pipeline import IngestionPipeline
 
 
 class TestIngestionPipeline:
     def _make_pipeline(self, tmp_path, mock_vector_store):
         from src.ingestion.loaders.text_loader import TextLoader
-        from src.ingestion.processors.text_processor import TextProcessor
         from src.ingestion.processors.image_processor import ImageProcessor
         from src.ingestion.processors.table_processor import TableProcessor
+        from src.ingestion.processors.text_processor import TextProcessor
 
         mock_vision_llm = MagicMock()
         mock_vision_llm.ainvoke = AsyncMock(return_value=MagicMock(content="Bildbeschreibung"))

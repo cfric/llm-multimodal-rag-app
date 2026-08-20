@@ -1,6 +1,6 @@
-import pytest
 from unittest.mock import MagicMock
 
+import pytest
 from langchain_core.documents import Document
 
 from src.core.exceptions import VectorStoreError
@@ -41,12 +41,25 @@ class TestChromaVectorStore:
             store.add_documents([Document(page_content="Test", metadata={})])
 
     def test_similarity_search(self, tmp_path):
-        store = self._make_store(tmp_path)
-        expected = [Document(page_content="Ergebnis", metadata={})]
+        store = ChromaVectorStore(
+            embedder=MagicMock(),
+            persist_directory=str(tmp_path / "chroma"),
+            collection_name="test_collection",
+            min_relevance_score=0.5,
+            image_min_relevance_score=0.7,
+        )
+        relevant = Document(page_content="Ergebnis", metadata={})
+        irrelevant = Document(page_content="Fremdes Thema", metadata={"type": "image"})
         mock_chroma = MagicMock()
-        mock_chroma.similarity_search.return_value = expected
+        mock_chroma.similarity_search_with_relevance_scores.return_value = [
+            (relevant, 0.8),
+            (irrelevant, 0.6),
+        ]
         store._store = mock_chroma
 
         result = store.similarity_search("Test-Query", k=5)
-        assert result == expected
-        mock_chroma.similarity_search.assert_called_once_with("Test-Query", k=5)
+        assert result == [relevant]
+        assert relevant.metadata["retrieval_score"] == 0.8
+        mock_chroma.similarity_search_with_relevance_scores.assert_called_once_with(
+            "Test-Query", k=5
+        )

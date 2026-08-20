@@ -1,7 +1,8 @@
-import pytest
 from unittest.mock import MagicMock
 
-from src.core.interfaces import ChatMessage, RAGResponse, Source
+import pytest
+
+from src.core.interfaces import RAGResponse, Source
 from src.evaluation.evaluator import EvaluationSample, RAGEvaluator
 
 
