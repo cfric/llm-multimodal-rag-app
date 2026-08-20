@@ -25,6 +25,9 @@ data/documents/
 figures/
 logs/
 
+# Temp
+tmp/
+
 # IDE
 .vscode/
 .idea/

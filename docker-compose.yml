@@ -1,53 +1,60 @@
-version: "3.9"
-
 services:
   api:
     build: .
     container_name: rag_api
     ports:
-      - "8000:8000"
-      - "8001:8001"
+      - "127.0.0.1:8000:8000"
     env_file:
       - .env
+    environment:
+      - VECTORSTORE_CHROMA_HOST=chromadb
+      - VECTORSTORE_CHROMA_PORT=8000
     volumes:
       - ./data:/app/data
       - ./logs:/app/logs
       - ./config:/app/config
     depends_on:
-      - chromadb
-    command: uvicorn src.api.main:app --host 0.0.0.0 --port 8000
+      chromadb:
+        condition: service_healthy
     restart: unless-stopped
 
   streamlit:
     build: .
     container_name: rag_ui
     ports:
-      - "8501:8501"
+      - "127.0.0.1:8501:8501"
     env_file:
       - .env
+    environment:
+      - VECTORSTORE_CHROMA_HOST=chromadb
+      - VECTORSTORE_CHROMA_PORT=8000
     volumes:
       - ./data:/app/data
       - ./logs:/app/logs
       - ./config:/app/config
+    command: streamlit run src/ui/streamlit_app.py --server.port 8501 --server.address 0.0.0.0
     depends_on:
       - api
-    command: streamlit run src/ui/streamlit_app.py --server.port 8501 --server.address 0.0.0.0
     restart: unless-stopped
 
   chromadb:
-    image: chromadb/chroma:latest
+    image: chromadb/chroma:0.5.23
     container_name: rag_chromadb
-    ports:
-      - "8002:8000"
     volumes:
       - chroma_data:/chroma/chroma
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/heartbeat"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
     restart: unless-stopped
 
   prometheus:
-    image: prom/prometheus:latest
+    image: prom/prometheus:v3.1.0
     container_name: rag_prometheus
     ports:
-      - "9090:9090"
+      - "127.0.0.1:9090:9090"
     volumes:
       - ./docker/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
       - prometheus_data:/prometheus
@@ -58,16 +65,16 @@ services:
     restart: unless-stopped
 
   grafana:
-    image: grafana/grafana:latest
+    image: grafana/grafana:11.4.0
     container_name: rag_grafana
     ports:
-      - "3000:3000"
+      - "127.0.0.1:3000:3000"
     environment:
-      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:?Set GRAFANA_ADMIN_PASSWORD in .env}
       - GF_USERS_ALLOW_SIGN_UP=false
     volumes:
       - grafana_data:/var/lib/grafana
-      - ./docker/grafana/dashboards:/etc/grafana/provisioning/dashboards
+      - ./docker/grafana/provisioning:/etc/grafana/provisioning
     depends_on:
       - prometheus
     restart: unless-stopped

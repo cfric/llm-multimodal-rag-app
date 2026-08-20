@@ -12,10 +12,13 @@ embedding:
   model: text-embedding-3-large
 
 vectorstore:
-  provider: chroma          # chroma | qdrant
+  provider: chroma
   persist_directory: ./data/vectorstore
   collection_name: multimodal_rag
-  qdrant_url: "http://localhost:6333"
+  min_relevance_score: 0.35  # Chunks darunter werden nicht als Kontext verwendet
+  image_min_relevance_score: 0.55  # Bilder nur bei klarer inhaltlicher Übereinstimmung
+  chroma_host: ""           # leer = embedded (lokal); Hostname = HTTP-Client (Docker)
+  chroma_port: 8000
 
 reranker:
   enabled: true
@@ -36,8 +39,10 @@ langsmith:
   project: multimodal-rag
 
 api:
-  host: "0.0.0.0"
+  host: "127.0.0.1"
   port: 8000
+  cors_origins: "http://localhost:8501,http://127.0.0.1:8501"
+  max_upload_size_mb: 25
 
 data_dir: ./data
 documents_dir: ./data/documents
