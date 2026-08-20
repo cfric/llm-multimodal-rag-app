@@ -23,16 +23,16 @@ vector store.
 ```
 ┌─────────────────────────────────────────────────────────┐
 │              Document Upload (PDF · Image · Text)       │
-│              POST /api/v1/documents/upload               │
+│              POST /api/v1/documents/upload              │
 └────────────────────────┬────────────────────────────────┘
                          │
                          ▼
 ┌─────────────────────────────────────────────────────────┐
 │              Ingestion Pipeline (Unstructured hi_res)   │
-│  ┌─────────────┐  ┌──────────────────────┐  ┌────────┐ │
-│  │ Text Chunk  │  │ Image → GPT-4o Vision│  │ Table  │ │
-│  │ + Splitter  │  │ → Description        │  │Summary │ │
-│  └─────────────┘  └──────────────────────┘  └────────┘ │
+│  ┌─────────────┐  ┌──────────────────────┐  ┌────────┐  │
+│  │ Text Chunk  │  │ Image → GPT-4o Vision│  │ Table  │  │
+│  │ + Splitter  │  │ → Description        │  │Summary │  │
+│  └─────────────┘  └──────────────────────┘  └────────┘  │
 └────────────────────────┬────────────────────────────────┘
                          │
                          ▼
@@ -44,7 +44,7 @@ vector store.
                          │
                          ▼
           ┌──────────────────────────────────┐
-           │   ChromaDB VectorStore            │
+          │   ChromaDB VectorStore           │
           └──────────────┬───────────────────┘
                          │  Query
                          ▼
