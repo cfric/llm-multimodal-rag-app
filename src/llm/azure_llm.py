@@ -39,5 +39,5 @@ class AzureLLM(LLMBase):
             azure_deployment=self._deployment,
             api_version=self._api_version,
             temperature=self._temperature,
-            max_completion_tokens=self._max_tokens,
+            max_tokens=self._max_tokens,
         )
