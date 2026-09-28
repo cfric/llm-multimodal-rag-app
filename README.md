@@ -1,15 +1,21 @@
 # Multimodal RAG System
 
 ![Python](https://img.shields.io/badge/Python-3.12-blue)
-![FastAPI](https://img.shields.io/badge/FastAPI-0.136-green)
-![Streamlit](https://img.shields.io/badge/Streamlit-1.58-red)
-![LangChain](https://img.shields.io/badge/LangChain-1.3-yellow)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.141-green)
+![Streamlit](https://img.shields.io/badge/Streamlit-1.64-red)
+![LangChain](https://img.shields.io/badge/LangChain-0.3-yellow)
 ![Docker](https://img.shields.io/badge/Docker-Compose-2496ED)
 
 This is a portfolio project for a local, single-user multimodal Retrieval-Augmented Generation
 pipeline built with Python and LangChain. It demonstrates a production-inspired architecture:
 PDFs, images and text documents are ingested, stored in a vector store and queried through a
 FastAPI and Streamlit interface.
+
+Repository: [github.com/cfric/llm-multimodal-rag-app](https://github.com/cfric/llm-multimodal-rag-app)
+
+**Current status:** advanced portfolio prototype. The core pipeline is implemented and verified by
+automated tests, but the project is intentionally scoped to a local single-user environment and
+is not a public deployment template.
 
 Multimodal means that not only text is processed — images are described via GPT-4o Vision and
 stored as semantically searchable chunks; tables are stored as a summary (embedded) and as
@@ -89,6 +95,9 @@ This project can be started in two different ways. Both options are listed in th
 | **Effort** | One-time setup required | Runs immediately, no Python setup |
 | **Command** | `make setup && make api` | `make docker-up` |
 
+The direct dependency input is maintained in `requirements.in`; the pinned installation set is
+committed in `requirements.txt`. Run `make lock` after changing dependencies.
+
 ---
 
 ## Prerequisite — API Key
@@ -99,7 +108,7 @@ Create a `.env` file in the project directory:
 ```bash
 cp .env.example .env
 # Then add to .env:
-OPENAI_API_KEY=sk-...
+OPENAI_API_KEY=<your-openai-api-key>
 ```
 
 Alternatively, Ollama (local, no API key required) or HuggingFace can be configured as the
@@ -142,8 +151,8 @@ brew install tesseract poppler                      # macOS
 ### Step 2 — Clone the Repository
 
 ```bash
-git clone https://github.com/<your-username>/llm_multimodal_rag.git
-cd llm_multimodal_rag
+git clone https://github.com/cfric/llm-multimodal-rag-app.git
+cd llm-multimodal-rag-app
 ```
 
 ### Step 3 — Set Up the Environment
@@ -195,6 +204,10 @@ make setup         # set up environment (run once)
 make api           # start FastAPI  →  http://localhost:8000
 make ui            # start Streamlit  →  http://localhost:8501
 make test          # run test suite
+make demo-assets   # create the copyright-free demo image
+make demo-index    # index demo document and image (requires model access)
+make evaluate      # run RAGAS evaluation and write a JSON report
+make lock          # resolve and pin dependencies
 make clean         # delete generated files (logs, vector data, images)
 ```
 
@@ -218,8 +231,8 @@ docker compose version     # should output a version number
 ### Step 2 — Clone the Repository
 
 ```bash
-git clone https://github.com/<your-username>/llm_multimodal_rag.git
-cd llm_multimodal_rag
+git clone https://github.com/cfric/llm-multimodal-rag-app.git
+cd llm-multimodal-rag-app
 ```
 
 ### Step 3 — Create .env
@@ -377,10 +390,62 @@ environment variables (`.env`):
 
 ---
 
+## Evaluation
+
+The repository contains a small Golden Dataset with text, table and image questions at
+`tests/evaluation/data/golden_dataset.json`. It can be evaluated against the configured RAG chain:
+
+```bash
+make demo-index
+make evaluate
+```
+
+The evaluator reports deterministic source and modality metrics separately from the model-based
+RAGAS metrics. It records the dataset hash, Git commit and effective model/retrieval configuration.
+The command requires model access and writes `reports/evaluation/latest.json`. It is intentionally
+not part of the default CI job because external model calls are non-deterministic and may incur
+costs.
+
+The evaluation protocol and current verification status are documented in
+[`docs/evaluation.md`](docs/evaluation.md). Design trade-offs are documented in
+[`docs/design-decisions.md`](docs/design-decisions.md).
+
+The public-release checklist is documented in
+[`docs/github-release-checklist.md`](docs/github-release-checklist.md).
+
+For deterministic metrics only, run the evaluator after indexing the demo data:
+
+```bash
+PYTHONPATH=. .venv/bin/python scripts/evaluate.py --skip-ragas
+```
+
+The full demonstration workflow, recommended questions and capture checklist are documented in
+[`docs/demo.md`](docs/demo.md).
+
+![Multimodal RAG flow](docs/assets/multimodal-flow.svg)
+
+![FastAPI OpenAPI documentation](docs/assets/screenshots/fastapi-openapi.png)
+
+## Verification
+
+The standard quality gate runs without external model access:
+
+```bash
+PYTHONPATH=. .venv/bin/python -m pytest tests/ -q
+.venv/bin/ruff check .
+PYTHONPATH=. .venv/bin/python -m mypy src
+.venv/bin/python -m pip check
+```
+
+The current baseline is 41 passing tests. External-provider behavior is covered separately by the
+opt-in demo and evaluation commands.
+
+---
+
 ## Project Structure
 
 ```
-llm_multimodal_rag/
+llm-multimodal-rag-app/
 ├── src/
 │   ├── api/
 │   │   ├── main.py            # FastAPI app + startup
@@ -450,14 +515,16 @@ llm_multimodal_rag/
 
 ---
 
-## Next Steps
+## Known Limitations
 
-The following improvements are planned for future implementation:
+1. The application is designed for local, single-user use.
+2. Streamlit currently uses the internal application services directly; the FastAPI API remains the
+   independently testable backend interface.
+3. RAGAS evaluation requires configured model access and is not run automatically in CI.
+4. Authentication, durable job tracking and multi-user session persistence are outside the current scope.
 
-1. **Streaming UI** — Streamlit frontend displays the answer token-by-token via the `/stream` endpoint
-2. **Document deduplication** — detect on upload whether a document already exists in the vector store
-3. **Authentication** — API key middleware before adapting the project for public deployment
-4. **Extended evaluation** — RAGAS metrics (Faithfulness, Answer Relevancy) as an automated report after each deployment
+For the exact public-release boundaries and secret/data checks, see
+[`docs/github-release-checklist.md`](docs/github-release-checklist.md).
 
 ---
 

@@ -1,0 +1,44 @@
+# Direct runtime and development dependencies.
+# The resolved versions are committed in requirements.txt.
+langchain>=0.3.0,<1.0.0
+langchain-core>=0.3.0,<1.0.0
+langchain-community>=0.3.0,<0.4.0
+langchain-openai>=0.2.0,<0.4.0
+langchain-ollama>=0.2.0,<0.4.0
+langchain-chroma>=0.1.4,<0.3.0
+langchain-text-splitters>=0.3.0,<0.4.0
+langchain-huggingface>=0.1.0,<0.3.0
+langsmith>=0.1.0
+openai>=1.55.0,<2.0.0
+cohere>=5.11.0
+sentence-transformers>=3.3.0
+transformers>=4.46.0
+# The application defaults to CPU inference. Keeping CUDA out of the default lock
+# makes local and Docker setup reproducible without multi-gigabyte GPU downloads.
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch==2.14.0+cpu
+torchvision==0.29.0+cpu
+unstructured[all-docs]>=0.16.0
+pypdf>=4.0.0
+Pillow>=11.0.0
+chromadb>=0.5.0
+fastapi>=0.115.0
+uvicorn[standard]>=0.32.0
+python-multipart>=0.0.12
+httpx>=0.28.0
+aiofiles>=24.1.0
+streamlit>=1.40.0
+pydantic>=2.10.0
+pydantic-settings>=2.6.0
+PyYAML>=6.0.0
+python-dotenv>=1.0.0
+prometheus-client>=0.21.0
+ragas==0.3.1
+datasets>=3.1.0
+pip-tools>=7.4.0
+pytest>=8.0.0
+pytest-asyncio>=0.24.0
+pytest-mock>=3.14.0
+pytest-cov>=6.0.0
+ruff>=0.8.0
+mypy>=1.13.0

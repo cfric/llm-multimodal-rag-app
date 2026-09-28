@@ -5,7 +5,8 @@ services:
     ports:
       - "127.0.0.1:8000:8000"
     env_file:
-      - .env
+      - path: .env
+        required: false
     environment:
       - VECTORSTORE_CHROMA_HOST=chromadb
       - VECTORSTORE_CHROMA_PORT=8000
@@ -24,7 +25,8 @@ services:
     ports:
       - "127.0.0.1:8501:8501"
     env_file:
-      - .env
+      - path: .env
+        required: false
     environment:
       - VECTORSTORE_CHROMA_HOST=chromadb
       - VECTORSTORE_CHROMA_PORT=8000

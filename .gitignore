@@ -22,8 +22,12 @@ data/vectorstore/
 data/vectorstore_test/
 data/images/
 data/documents/
+data/demo/generated/
 figures/
 logs/
+
+# Evaluation reports
+reports/evaluation/
 
 # Temp
 tmp/

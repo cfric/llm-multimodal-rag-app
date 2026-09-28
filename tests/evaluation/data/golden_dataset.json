@@ -1,0 +1,44 @@
+[
+  {
+    "id": "text_001",
+    "modality": "text",
+    "question": "Welche Komponenten bildet die Demo-Anwendung ab?",
+    "ground_truth": "Die Demo-Anwendung bildet Dokumentaufnahme, Ingestion, Retrieval, Reranking und Antwortgenerierung ab.",
+    "expected_sources": ["demo_document.md"]
+  },
+  {
+    "id": "text_002",
+    "modality": "text",
+    "question": "Welche Vector-Store-Technologie wird in der Demo verwendet?",
+    "ground_truth": "Die Demo verwendet ChromaDB als Vector Store.",
+    "expected_sources": ["demo_document.md"]
+  },
+  {
+    "id": "table_001",
+    "modality": "table",
+    "question": "Welche Aufgabe übernimmt der Reranker laut Tabelle?",
+    "ground_truth": "Der Reranker bewertet die Treffer neu und reduziert den Kontext auf die relevantesten Dokumente.",
+    "expected_sources": ["demo_document.md"]
+  },
+  {
+    "id": "table_002",
+    "modality": "table",
+    "question": "Welche Eingabeformate werden in der Tabelle genannt?",
+    "ground_truth": "Genannt werden Text, PDF und Bild.",
+    "expected_sources": ["demo_document.md"]
+  },
+  {
+    "id": "image_001",
+    "modality": "image",
+    "question": "Welche Stationen zeigt das Demo-Diagramm?",
+    "ground_truth": "Das Diagramm zeigt die Stationen Dokument, Retrieval, Reranking und Antwort.",
+    "expected_sources": ["demo_diagram.png"]
+  },
+  {
+    "id": "image_002",
+    "modality": "image",
+    "question": "Welche Komponente steht im Diagramm vor der Antwort?",
+    "ground_truth": "Vor der Antwort steht das Reranking.",
+    "expected_sources": ["demo_diagram.png"]
+  }
+]
