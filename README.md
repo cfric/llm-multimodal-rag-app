@@ -523,8 +523,6 @@ llm-multimodal-rag-app/
 3. RAGAS evaluation requires configured model access and is not run automatically in CI.
 4. Authentication, durable job tracking and multi-user session persistence are outside the current scope.
 
-For the exact public-release boundaries and secret/data checks, see
-[`docs/github-release-checklist.md`](docs/github-release-checklist.md).
 
 ---
 
